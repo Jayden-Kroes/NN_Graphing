@@ -13,7 +13,7 @@ class Data:
             y = random.random()
             v = random.randint(0, type_count - 1)
             self.data.append([[x, y], v])
-        print(self.data)
+        # print(self.data)
 
     def get_data(self):
         return self.data
