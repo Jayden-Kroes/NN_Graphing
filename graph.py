@@ -4,21 +4,21 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 class DataGraph:
-    def __init__():
+    def __init__(self):
         pass
 
-    def show_data(data, equation, x_parts = 10, y_parts=10, colourmap=np.array(['r','b','g'])):
+# self unneccessary
+    def show_data(self, positions, types, equation, x_parts = 10, y_parts=10, colourmap=np.array(['b','r','g']), save_file=None, dimensions=(20,11.25)):
         #plt.contour()
-        data_x = []
-        data_y = []
-        data_v = []
-        for xyv in data:
-            data_x.append(xyv[0][0])
-            data_y.append(xyv[0][1])
-            data_v.append(int(xyv[1]))
+        pos_x = []
+        pos_y = []
+        # data_v = []
+        for pos in positions:
+            pos_x.append(pos[0])
+            pos_y.append(pos[1])
 
         
-        data_v = np.array(data_v)
+        types = np.array(types)
 
 
         # plt.show()
@@ -29,22 +29,38 @@ class DataGraph:
         z = np.zeros((len(y), len(x)))
         for y_ind in range(y_parts+1):
             for x_ind in range(x_parts+1):
-                z[y_ind, x_ind] = equation(x_ind, y_ind)
+                print("\rGenerating graph", x_ind + y_ind*(x_parts+1) + 1, 'of', (x_parts+1) * (y_parts+1), end='\r')
+                z[x_ind, y_ind] = equation(x[x_ind,y_ind], y[x_ind, y_ind])
                 #print(x_ind, y_ind, z[y_ind, x_ind])
-    
+        print()
 
         # print(x)
         # print(y)
         # print(z)
 
-        levels = MaxNLocator(nbins=15).tick_values(z.min(), z.max())
+        levels = MaxNLocator(nbins=10).tick_values(0, 1)
         
-        cmap = plt.get_cmap('PiYG')
+        cmap = plt.get_cmap('coolwarm', lut=10)
         norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
         plt.ylim((0,1))
         plt.xlim((0,1))
-        plt.contourf(x , y , z, levels=levels, cmap=cmap)
-        plt.scatter(data_x, data_y, c=colourmap[data_v])
+        modelplot = plt.contourf(x , y , z, levels=levels, cmap=cmap)
+        # modelplot = plt.pcolormesh(x, y, z, cmap=cmap, norm=norm)
+        dataplot = plt.scatter(pos_x, pos_y, c=colourmap[types])
 
-        plt.show()
+        plt.colorbar(modelplot)
+
+        # plt.tight_layout()
+
+        #plt.figure(figsize=dimensions, dpi=96)
+
+        # plt.draw()        
+        # plt.show(block=False)
+        # plt.show()
+        if save_file is None:
+            save_file = "plot.png"
+        plt.savefig(save_file, dpi=(225))
+
+        plt.clf()
+
