@@ -4,7 +4,7 @@ import random
 def random_name(length=10):
     characters='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     name=""
-    for i in range(length):
+    for _ in range(length):
         name +=characters[random.randint(0, len(characters)-1)]
     return name
 
@@ -14,7 +14,7 @@ def get_random_directory(parent_directory=None, ensure_random=True):
     try:
         # Create target Directory
         os.mkdir(dirName)
-        print("Directory " , dirName ,  " Created ") 
+        # print("Directory " , dirName ,  " Created ") 
         return dirName
     except FileExistsError:
         print("Directory " , dirName ,  " already exists")
