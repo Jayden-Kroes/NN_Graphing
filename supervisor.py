@@ -1,4 +1,7 @@
 import NNModel
+import graph
+import progress
+from matplotlib import pyplot as plt
 
 C_YES = 1
 C_TOOK_TOO_LONG = 2
@@ -6,91 +9,155 @@ C_NO_PROGRESS = 3
 C_GRADUATED = 4
 C_UNENROLLED = 5
 
+end_status = ""
+
 class TrainingClass:
-    def __init__(self, cohort, curriculum, min_steps = 100, max_steps=None, patience=10, improvement_ratio = 0.999, graduation_value=0.0001, drop_failures=True, train_alumni=True, student_race=False):
+    def __init__(self, cohort, curriculum, 
+                min_steps = 100, max_steps=None, 
+                patience=10, improvement_ratio = 0.999, 
+                graduation_value=0.0001, drop_failures=True, train_alumni=False, student_race=False,
+                start_display_size=(20,20)):
+
         self._lesson_number = -1
-        self.curriculum = curriculum
-        self.cohort = cohort
-        self.mark_list = []
-        self.is_enrolled = []
-        for student in cohort:
-            self.mark_list.append({"lesson": -1, "mark": 1.0})
-            self.is_enrolled.append(True)
-        self.min_steps = min_steps
-        self.max_steps = max_steps
-        self.patience = patience
-        self.improvement_ratio = improvement_ratio
-        self.graduation_value = graduation_value
+        # curriculum is expected data
+        self._curriculum = curriculum
+        # cohort is list of models
+        self._cohort = cohort
 
-        self.drop_failures = drop_failures
-        self.train_alumni = train_alumni
-        self.student_race = student_race
+        # a list of every score for each student
+        self._result_history = []
 
-        self.end_status = ''
+        self._official_highest_index = []
 
-    def begin_new_lesson(self):
+        # are they still being trained
+        self._do_train_student = []
+        # what output does the cohort produce
+        self._cohort_displays = []
+
+
+        for student in self._cohort:
+            #add blank list for student
+            self._result_history.append([])
+            self._official_highest_index.append(-1)
+            self._do_train_student.append(True)
+            self._cohort_displays.append(
+                graph.Model_Output(student.predict, start_display_size))
+            progress.model_index +=1
+
+        self._min_steps = min_steps
+        self._max_steps = max_steps
+        self._patience = patience
+        self._improvement_ratio = improvement_ratio
+        self._graduation_requirement = graduation_value
+
+        self._do_drop_failures = drop_failures
+        self._do_train_alumni = train_alumni
+        self._do_have_student_race = student_race
+
+
+    # train all students
+    def run_lesson_training(self, graph_size = (20,20)):
         self._lesson_number += 1
-        for index in range(len(self.cohort)):
-            if self.is_enrolled[index]:
-                self.cohort[index].teach(self.curriculum.get_data()[0], self.curriculum.get_data()[1])
-                print('\rLesson', self._lesson_number, 'Student', index,'\r')
-        print()
+        for index in range(len(self._cohort)):
+            if self._do_train_student[index]:
+                self._result_history[index].append(
+                    self._cohort[index].train(
+                        self._curriculum.get_data()[0], 
+                        self._curriculum.get_data()[1]))
+                
+                progress.model_index = index
+                #progress.model_loss = self._cohort[student].get_loss_history()[-1] if self._lesson_number >= 0 else 1.0
+                progress.model_loss = self._result_history[index][-1] if self._lesson_number >= 0 else 1.0
+                print()
+                self._cohort_displays[index] = graph.Model_Output(self._cohort[index].predict, graph_size)
+                
 
-    def continue_class(self):
+
+    # decide whether to continue training the class
+    def do_continue_class(self):
         if self._lesson_number == -1:
             return True
         any_continue = False
         lesson_results = []
-        for studentId in range(len(self.cohort)):
-            if self.is_enrolled:
-                lesson_results.append(self.do_continue(studentId))
+
+        # update student enrollment
+        for studentId in range(len(self._cohort)):
+            if self._do_train_student[studentId]:
+                lesson_results.append(self.do_continue_student(studentId))
                 if lesson_results[studentId] == C_YES:
                     any_continue = True
+                elif lesson_results[studentId] == C_GRADUATED:
+                    if not self._do_train_alumni:
+                        self._do_train_student[studentId] = False
+                elif lesson_results[studentId] == C_NO_PROGRESS or lesson_results[studentId] == C_TOOK_TOO_LONG:
+                    if self._do_drop_failures:
+                        self._do_train_student[studentId] = False
             else:
                 lesson_results.append(C_UNENROLLED)
-        for studentId in range (len(self.cohort)):
-            if lesson_results[studentId] == C_YES:
-                pass
-            elif lesson_results[studentId] == C_GRADUATED:
-                if not self.train_alumni:
-                    self.is_enrolled = False
-            elif self.drop_failures:
-                self.is_enrolled = False
 
-        print (any_continue)   
+        if not any_continue:
+            print()
+            print(lesson_results)
+
         return any_continue
-             
+    
+    # decide if a student should be continued
+    def do_continue_student(self, index):
 
+        # student has no recorded highest, but has started
+        if self._official_highest_index[index] == -1 and len(self._result_history[index])> 0:
+            self._official_highest_index[index] = 0
+            return C_YES
 
-    def do_continue(self, index):
-        new_loss = self.cohort[index].get_loss_history()[-1]
-        if new_loss < self.mark_list[index]["mark"] * self.improvement_ratio:
-            self.mark_list[index]["mark"] = new_loss
-            self.mark_list[index]["lesson"] = self._lesson_number
+        latest_acc = self._result_history[index][-1]
+        prev_highest = self._result_history[index][self._official_highest_index[index]]
 
-        if new_loss <= self.graduation_value:
-            print("\nReached high accuracy")
-            self.end_status = "Success"
+        # student has reached level of graduation
+        if latest_acc <= self._graduation_requirement:
+            self._official_highest_index[index] = len(self._result_history[index]) - 1
             return C_GRADUATED
 
-        below_min = self.min_steps is not None and self._lesson_number < self.min_steps 
+        # student has attended the maximum possible classes
+        above_max = (self._max_steps is not None and self._lesson_number >= self._max_steps)
+        if above_max:
+            return C_TOOK_TOO_LONG
+
+        # update high score index
+        if latest_acc <= prev_highest * self._improvement_ratio:
+            self._official_highest_index[index] = len(self._result_history[index]) - 1
+            return C_YES
+
+        # student has not attended the minimum required classes
+        below_min = (self._min_steps is not None and self._lesson_number < self._min_steps)
         if below_min:
             return C_YES
         
-        above_max = self.max_steps is not None and self._lesson_number >= self.max_steps
-        if above_max:
-            print("\nMax steps reached")
-            self.end_status = "Failed - took too long"
-            return C_TOOK_TOO_LONG
-
-        if self.mark_list[index]["lesson"] == self._lesson_number:
-            return C_YES
-
-        else:
-            if self._lesson_number <= self.mark_list[index]["lesson"]+ self.patience:
+        # student has improved recently
+        elif self._lesson_number <= self._official_highest_index[index] + self._patience:
                 return C_YES
-            else:
-                print("\nNo progress made")
-                self.end_status = "Failed - no progress"
-                return C_NO_PROGRESS
 
+        # student is not making progress
+        else:
+            return C_NO_PROGRESS
+
+
+    def display_class_results(self, file_name):
+        plt.clf()
+        figure, axes = plt.subplots(1, len(self._cohort), figsize=(16,9))
+        figure.tight_layout(rect=[0, 0.03, 1, 0.85])
+        # figure.subplots_adjust(top=0.8)
+        title = 'Step ' + str(self._lesson_number+1) if self._lesson_number >= 0 else 'Start'
+        figure.suptitle(title, fontsize=24, y=0.98)
+
+        for student in range(len(self._cohort)):
+            title = "Model " + str(student)+ (": " + str(self._result_history[student][-1]) if self._lesson_number >= 0 else " - Start")
+            #graph.plot_model_output(positions, labels, self._cohort[student].predict, axes[student], x_parts=graph_detail, y_parts=graph_detail, title=title)
+            graph.display_model_output(self._curriculum, self._cohort_displays[student], axes[student], title=title)
+            
+        
+        if file_name is None:
+            file_name = "plot.png"
+        figure.savefig(file_name, dpi=(255))
+
+        plt.close(figure)
+        plt.clf()
