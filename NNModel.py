@@ -3,8 +3,10 @@ from tensorflow import keras
 from tensorflow import optimizers
 from tensorflow import losses
 
+
 class NNModel:
-    def __init__(self, input_num=2, output_num=1, hidden_layers=[4], main_activation=tf.nn.relu, last_activation=tf.keras.activations.hard_sigmoid):
+    model_count = 0
+    def __init__(self, input_num=2, output_num=1, hidden_layers=[4], name=None, main_activation=tf.nn.relu, last_activation=tf.keras.activations.hard_sigmoid):
         self.nn = keras.Sequential()
         
         if len(hidden_layers) == 0:
@@ -16,37 +18,30 @@ class NNModel:
             self.nn.add(keras.layers.Dense(output_num, activation=last_activation))
             self.nn.compile(optimizer='Adam', loss=losses.mse)
         
-        self.lesson_memory=[]
-        self.accuracy_history=[]
-        self._greatest_accuracy = 1.0
+        NNModel.model_count += 1
+        if name is None:
+            self.name = "Model " + str(NNModel.model_count)
+        else:
+            self.name = str(name)
 
 
+    # use the model to give a prediction for a given position
     def predict(self, x, y):
         output = self.nn.predict([[x,y]])
         return output[0]
 
-    #def show_prediction_accuracy(self, inputs, t):
-    #    for i in range(len(inputs)):
-    #        print(str(i)+".", "("+str(inputs[i][0]),str(inputs[i][1])+")",'=', t[i], '>', self.nn.predict([[inputs[i][0],inputs[i][1]]])[0])
-    
+
+    # train the model using the inputs and outputs provided
+    # and return the accuracy
     def train(self, input, output, epochs=5):
-        lesson = self.nn.fit(input, output, epochs=epochs, verbose=0)
-        
+        lesson = self.nn.fit(input, output, epochs=epochs, verbose=0)        
         return lesson.history['loss'][-1]
-        #self.lesson_memory.append(lesson)
-        #latest_accuracy = lesson.history['loss'][-1]
-        #self.accuracy_history.append(latest_accuracy)
-        #if latest_accuracy < self._greatest_accuracy:
-        #    self._greatest_accuracy = latest_accuracy
 
-    #def get_loss_history(self):
-    #    return self.accuracy_history
 
+    # save the model's weights to a file
     def save_weights(self, dir):
         self.nn.save_weights(dir)
 
+    # load the model's weights from a file
     def load_weights(self, dir):
-        self.nn.load_weights(dir) 
-        
-    #def get_lowest_accuracy(self):
-    #    return self._greatest_accuracy
+        self.nn.load_weights(dir)

@@ -5,7 +5,6 @@ model_index = 0
 model_loss = 1.0
 
 
-
 def print_progress(graph_prog, graph_size, show_max_size=False, show_sessions=True):
     run_string = 'Step {}{}'.format(str(current_session) + ("-" if show_sessions else ''), current_step)
     model_string = 'Model {}'.format(model_index+1)

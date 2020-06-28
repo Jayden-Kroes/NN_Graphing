@@ -30,7 +30,8 @@ class TrainingClass:
         self._official_highest_index = []
 
         # are they still being trained
-        self._do_train_student = []
+        #self._do_train_student = []
+        self._enrollment_status = []
         # what output does the cohort produce
         self._cohort_displays = []
 
@@ -39,7 +40,8 @@ class TrainingClass:
             #add blank list for student
             self._result_history.append([])
             self._official_highest_index.append(-1)
-            self._do_train_student.append(True)
+            #self._do_train_student.append(True)
+            self._enrollment_status.append(C_YES)
             self._cohort_displays.append(
                 graph.Model_Output(student.predict, start_display_size))
             progress.model_index +=1
@@ -54,50 +56,54 @@ class TrainingClass:
         self._do_train_alumni = train_alumni
         self._do_have_student_race = student_race
 
+    def is_student_training(self, index):
+        return self._enrollment_status[index] == C_YES or (
+            self._enrollment_status[index] == C_GRADUATED and self._do_train_alumni)
+
 
     # train all students
     def run_lesson_training(self, graph_size = (20,20)):
         self._lesson_number += 1
         for index in range(len(self._cohort)):
-            if self._do_train_student[index]:
+            #if self._do_train_student[index]:
+            if self.is_student_training(index):
+                # train student
                 self._result_history[index].append(
                     self._cohort[index].train(
                         self._curriculum.get_data()[0], 
                         self._curriculum.get_data()[1]))
                 
+                # update progress bar
                 progress.model_index = index
-                #progress.model_loss = self._cohort[student].get_loss_history()[-1] if self._lesson_number >= 0 else 1.0
                 progress.model_loss = self._result_history[index][-1] if self._lesson_number >= 0 else 1.0
                 print()
+
+                # update display samples
                 self._cohort_displays[index] = graph.Model_Output(self._cohort[index].predict, graph_size)
                 
-
 
     # decide whether to continue training the class
     def do_continue_class(self):
         if self._lesson_number == -1:
             return True
         any_continue = False
-        lesson_results = []
+        #lesson_results = []
 
         # update student enrollment
         for studentId in range(len(self._cohort)):
-            if self._do_train_student[studentId]:
-                lesson_results.append(self.do_continue_student(studentId))
-                if lesson_results[studentId] == C_YES:
+            #if self._do_train_student[studentId]:
+            if self.is_student_training(studentId):
+                #lesson_results.append(self.do_continue_student(studentId))
+                self._enrollment_status[studentId] = self.do_continue_student(studentId)
+                if self.is_student_training(studentId):
                     any_continue = True
-                elif lesson_results[studentId] == C_GRADUATED:
-                    if not self._do_train_alumni:
-                        self._do_train_student[studentId] = False
-                elif lesson_results[studentId] == C_NO_PROGRESS or lesson_results[studentId] == C_TOOK_TOO_LONG:
-                    if self._do_drop_failures:
-                        self._do_train_student[studentId] = False
-            else:
-                lesson_results.append(C_UNENROLLED)
+            # else:
+            #     self._enrollment_status[studentId] = C_UNENROLLED
 
-        if not any_continue:
-            print()
-            print(lesson_results)
+        # if not any_continue:
+        #     print()
+        #     #print(lesson_results)
+        #     print(self._enrollment_status)
 
         return any_continue
     
@@ -141,17 +147,17 @@ class TrainingClass:
             return C_NO_PROGRESS
 
 
-    def display_class_results(self, file_name):
+    def display_class_results(self, file_name, title=None, subtitle_acc = True):
         plt.clf()
         figure, axes = plt.subplots(1, len(self._cohort), figsize=(16,9))
-        figure.tight_layout(rect=[0, 0.03, 1, 0.85])
-        # figure.subplots_adjust(top=0.8)
-        title = 'Step ' + str(self._lesson_number+1) if self._lesson_number >= 0 else 'Start'
+        figure.tight_layout(rect=[0, 0.03, 1, 0.9])
+        if title is None:
+            title = 'Step ' + str(self._lesson_number+1) if self._lesson_number >= 0 else 'Start'
         figure.suptitle(title, fontsize=24, y=0.98)
+        
 
         for student in range(len(self._cohort)):
             title = "Model " + str(student)+ (": " + str(self._result_history[student][-1]) if self._lesson_number >= 0 else " - Start")
-            #graph.plot_model_output(positions, labels, self._cohort[student].predict, axes[student], x_parts=graph_detail, y_parts=graph_detail, title=title)
             graph.display_model_output(self._curriculum, self._cohort_displays[student], axes[student], title=title)
             
         
