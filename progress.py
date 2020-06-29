@@ -4,6 +4,14 @@ current_step = 1
 model_index = 0
 model_loss = 1.0
 
+new_line_per_model = True
+#L_Newline_per_model
+#L_Newline_per_step
+#L_Newline_per_lesson
+#linetype = L_Newline_per_lesson
+
+#TODO when progress line length changes, need to delete stuff after
+
 
 def print_progress(graph_prog, graph_size, show_max_size=False, show_sessions=True):
     run_string = 'Step {}{}'.format(str(current_session) + ("-" if show_sessions else ''), current_step)

@@ -16,7 +16,7 @@ class NNModel:
             for i in hidden_layers[1:-1]:
                 self.nn.add(keras.layers.Dense(i, activation=main_activation))
             self.nn.add(keras.layers.Dense(output_num, activation=last_activation))
-            self.nn.compile(optimizer='Adam', loss=losses.mse)
+        self.nn.compile(optimizer='Adam', loss=losses.mse)
         
         NNModel.model_count += 1
         if name is None:
@@ -24,6 +24,9 @@ class NNModel:
         else:
             self.name = str(name)
 
+    def reset_optimiser(self):
+        opt = keras.optimizers.Adam()
+        self.nn.compile(optimizer=opt, loss=losses.mse)
 
     # use the model to give a prediction for a given position
     def predict(self, x, y):

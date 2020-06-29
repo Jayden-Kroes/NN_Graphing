@@ -3,11 +3,11 @@ import graph
 import progress
 from matplotlib import pyplot as plt
 
-C_YES = 1
-C_TOOK_TOO_LONG = 2
-C_NO_PROGRESS = 3
-C_GRADUATED = 4
-C_UNENROLLED = 5
+C_YES = ""
+C_TOOK_TOO_LONG = "Max Steps Reached"
+C_NO_PROGRESS = "No Recent Progress"
+C_GRADUATED = "Reached Required Accuracy"
+C_UNENROLLED = "Stopped"
 
 end_status = ""
 
@@ -44,6 +44,8 @@ class TrainingClass:
             self._enrollment_status.append(C_YES)
             self._cohort_displays.append(
                 graph.Model_Output(student.predict, start_display_size))
+            if progress.new_line_per_model:
+                print()
             progress.model_index +=1
 
         self._min_steps = min_steps
@@ -76,11 +78,12 @@ class TrainingClass:
                 # update progress bar
                 progress.model_index = index
                 progress.model_loss = self._result_history[index][-1] if self._lesson_number >= 0 else 1.0
-                print()
-
+      
                 # update display samples
                 self._cohort_displays[index] = graph.Model_Output(self._cohort[index].predict, graph_size)
-                
+                if progress.new_line_per_model:
+                    print()
+
 
     # decide whether to continue training the class
     def do_continue_class(self):
@@ -157,8 +160,25 @@ class TrainingClass:
         
 
         for student in range(len(self._cohort)):
-            title = "Model " + str(student)+ (": " + str(self._result_history[student][-1]) if self._lesson_number >= 0 else " - Start")
-            graph.display_model_output(self._curriculum, self._cohort_displays[student], axes[student], title=title)
+            title = self._cohort[student].name
+            subtitle=None
+            if subtitle_acc:
+                if self._lesson_number < 0:
+                    #title += " - Start"
+                    subtitle = None
+                    pass
+                else:
+                    if self._enrollment_status[student] != C_YES:
+                        title += " - " + self._enrollment_status[student]
+                    subtitle = "Loss: " + str(self._result_history[student][-1])
+            else:                
+                if self._lesson_number <= 0:
+                    title += " - Start"
+                else: 
+                    title += ": " + str(self._result_history[student][-1])
+                subtitle = None
+
+            graph.display_model_output(self._curriculum, self._cohort_displays[student], axes[student], title=title, subtitle=subtitle)
             
         
         if file_name is None:

@@ -37,57 +37,16 @@ def save_figure(plots = [], save_file=None, title=None):
 
     plt.clf()
 
-# def plot_model_output(positions, types, equation, axis, x_parts = 10, y_parts=10, colourmap=np.array(['b','r','g']), dimensions=(20,11.25), show_prog=True, title=None):
-#     plots = []
+
+def display_model_output(data, samples, axis, colourmap=np.array(['b','r','g']), dimensions=(20,11.25), show_prog=True, title=None, subtitle=None):
     
-#     pos_x = []
-#     pos_y = []
-#     for pos in positions:
-#         pos_x.append(pos[0])
-#         pos_y.append(pos[1])
-
-    
-#     types = np.array(types)
-
-#     y, x = np.mgrid[slice(0, 1 + 1/y_parts, 1/y_parts),
-#             slice(0, 1 + 1/x_parts, 1/x_parts)]
-
-#     z = np.zeros((len(y), len(x)))
-#     for y_ind in range(y_parts+1):
-#         for x_ind in range(x_parts+1):
-#             # print("\rGenerating graph", , 'of', , end='\r')
-#             if show_prog:
-#                 progress.print_progress(x_ind + y_ind*(x_parts+1) + 1, (x_parts+1) * (y_parts+1))
-#             z[x_ind, y_ind] = equation(x[x_ind,y_ind], y[x_ind, y_ind])
-            
-#     #levels = MaxNLocator(nbins=10).tick_values(0, 1)
-    
-#     cmap = plt.get_cmap('coolwarm', lut=10)
-#     #norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
-
-#     plt.ylim((0,1))
-#     plt.xlim((0,1))
-#     #modelplot = self.figure_axes[subplot_index].contourf(x , y , z, 10, cmap=cmap)
-
-#     modelplot = axis.contourf(x , y , z, 10, cmap=cmap)
-#     axis.set_title(title)
-#     # modelplot = plt.pcolormesh(x, y, z, cmap=cmap, norm=norm)
-#     dataplot = axis.scatter(pos_x, pos_y, c=colourmap[types])
-
-#     # plt.colorbar(modelplot)
-
-#     # plt.tight_layout()
-
-#     # plt.draw()        
-#     # plt.show(block=False)
-#     # plt.show()
-#     plots.append(modelplot)
-#     plots.append(dataplot)
-#     return plots
-
-
-
-def display_model_output(data, samples, axis, colourmap=np.array(['b','r','g']), dimensions=(20,11.25), show_prog=True, title=None):
+    if not subtitle is None and not title is None:
+        #axis.figtext(0., 0.9, subtitle, fontsize=24, ha='center')
+        title += '\n' + subtitle
+     
+    if not title is None:
+        axis.set_title(title)
+       
     plots = []
     
     pos_x = []
@@ -95,31 +54,17 @@ def display_model_output(data, samples, axis, colourmap=np.array(['b','r','g']),
     for pos in data.get_data()[0]:
         pos_x.append(pos[0])
         pos_y.append(pos[1])
-
     
     types = np.array(data.get_data()[1])
-            
-    #levels = MaxNLocator(nbins=10).tick_values(0, 1)
     
     cmap = plt.get_cmap('coolwarm', lut=10)
-    #norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
 
     plt.ylim((0,1))
     plt.xlim((0,1))
-    #modelplot = self.figure_axes[subplot_index].contourf(x , y , z, 10, cmap=cmap)
 
-    modelplot = axis.contourf(samples.x , samples.y , samples.z,  10, cmap=cmap)
-    axis.set_title(title)
-    # modelplot = plt.pcolormesh(x, y, z, cmap=cmap, norm=norm)
+    modelplot = axis.contourf(samples.x , samples.y , samples.z,  10, cmap=cmap)    
     dataplot = axis.scatter(pos_x, pos_y, c=colourmap[types])
-
-    # plt.colorbar(modelplot)
-
-    # plt.tight_layout()
-
-    # plt.draw()        
-    # plt.show(block=False)
-    # plt.show()
+    
     plots.append(modelplot)
     plots.append(dataplot)
     return plots
