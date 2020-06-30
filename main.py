@@ -7,13 +7,13 @@ import supervisor
 from NNModel import NNModel as NN
 import tensorflow as tf
 
-graph_detail = 12
+graph_detail = 14
 max_runs = 1000
 session_count = 10
 
 data_type_count = 2
 data_point_count = 20
-data_grid_count = [6,6]
+data_grid_count = [7,7]
 
 model_layers = [100,100,100,100]
 model_layers2 = [100,100,100]
@@ -43,8 +43,9 @@ def new_run():
     while new_class.do_continue_class():
         file_name = dirName+"/Step "+str(step)+".png"
         new_class.display_class_results(file_name)
-        if not progress.new_line_per_model:
-            print()
+        # if not progress.new_line_per_model:
+        #     print()
+        progress.new_step()
         step += 1
         progress.current_step = step
         new_class.run_lesson_training(graph_size=(graph_detail, graph_detail))
@@ -57,10 +58,12 @@ def new_run():
 
 
 #Begin Here
-progress.new_line_per_model = False
+#progress.new_line_per_model = False
+progress.linetype = progress.L_Newline_per_class
 
 progress.session_count = session_count
 for i in range(session_count):
+    progress.new_run()
     progress.current_session = i + 1
     new_run()
-    print()
+    #print()

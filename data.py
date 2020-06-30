@@ -16,7 +16,6 @@ class Data:
             v = random.randint(0, type_count - 1)
             self.positions.append([x, y])
             self.types.append(v)
-        # print(self.data)
 
     def get_data(self):
         return self.positions, self.types

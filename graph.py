@@ -24,7 +24,6 @@ class Model_Output:
                 self.z[xpos,ypos] = equation(self.x[xpos,ypos], self.y[xpos, ypos])
 
 
-
 def save_figure(plots = [], save_file=None, title=None):
     plt.clf()
     if title == None:
@@ -41,7 +40,6 @@ def save_figure(plots = [], save_file=None, title=None):
 def display_model_output(data, samples, axis, colourmap=np.array(['b','r','g']), dimensions=(20,11.25), show_prog=True, title=None, subtitle=None):
     
     if not subtitle is None and not title is None:
-        #axis.figtext(0., 0.9, subtitle, fontsize=24, ha='center')
         title += '\n' + subtitle
      
     if not title is None:

@@ -4,11 +4,11 @@ current_step = 1
 model_index = 0
 model_loss = 1.0
 
-new_line_per_model = True
-#L_Newline_per_model
-#L_Newline_per_step
-#L_Newline_per_lesson
-#linetype = L_Newline_per_lesson
+#new_line_per_model = True
+L_Newline_per_model = "nl model"
+L_Newline_per_step = "nl step"
+L_Newline_per_class = "nl class"
+linetype = L_Newline_per_class
 
 #TODO when progress line length changes, need to delete stuff after
 
@@ -19,3 +19,15 @@ def print_progress(graph_prog, graph_size, show_max_size=False, show_sessions=Tr
     graph_string = 'Graph Prog: {} of {}'.format(graph_prog, graph_size)
     loss_string = 'Loss {:.10f}'.format(model_loss)
     print('\r{} {} {} - {}'.format(run_string, model_string, graph_string, loss_string), end='\r')
+    
+def new_model():
+    if linetype == L_Newline_per_model:
+        print()
+
+def new_step():
+    if linetype == L_Newline_per_model or linetype == L_Newline_per_step:
+        print()
+
+def new_run():
+    print()
+

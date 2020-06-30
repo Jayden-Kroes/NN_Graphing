@@ -30,7 +30,6 @@ class TrainingClass:
         self._official_highest_index = []
 
         # are they still being trained
-        #self._do_train_student = []
         self._enrollment_status = []
         # what output does the cohort produce
         self._cohort_displays = []
@@ -40,12 +39,12 @@ class TrainingClass:
             #add blank list for student
             self._result_history.append([])
             self._official_highest_index.append(-1)
-            #self._do_train_student.append(True)
             self._enrollment_status.append(C_YES)
             self._cohort_displays.append(
                 graph.Model_Output(student.predict, start_display_size))
-            if progress.new_line_per_model:
-                print()
+            # if progress.new_line_per_model:
+            #     print()
+            progress.new_model()
             progress.model_index +=1
 
         self._min_steps = min_steps
@@ -67,7 +66,6 @@ class TrainingClass:
     def run_lesson_training(self, graph_size = (20,20)):
         self._lesson_number += 1
         for index in range(len(self._cohort)):
-            #if self._do_train_student[index]:
             if self.is_student_training(index):
                 # train student
                 self._result_history[index].append(
@@ -78,35 +76,28 @@ class TrainingClass:
                 # update progress bar
                 progress.model_index = index
                 progress.model_loss = self._result_history[index][-1] if self._lesson_number >= 0 else 1.0
+                progress.new_model()
       
                 # update display samples
                 self._cohort_displays[index] = graph.Model_Output(self._cohort[index].predict, graph_size)
-                if progress.new_line_per_model:
-                    print()
+                # if progress.new_line_per_model:
+                #     print()
+
 
 
     # decide whether to continue training the class
     def do_continue_class(self):
         if self._lesson_number == -1:
             return True
+
         any_continue = False
-        #lesson_results = []
 
         # update student enrollment
         for studentId in range(len(self._cohort)):
-            #if self._do_train_student[studentId]:
             if self.is_student_training(studentId):
-                #lesson_results.append(self.do_continue_student(studentId))
                 self._enrollment_status[studentId] = self.do_continue_student(studentId)
                 if self.is_student_training(studentId):
                     any_continue = True
-            # else:
-            #     self._enrollment_status[studentId] = C_UNENROLLED
-
-        # if not any_continue:
-        #     print()
-        #     #print(lesson_results)
-        #     print(self._enrollment_status)
 
         return any_continue
     
@@ -164,7 +155,6 @@ class TrainingClass:
             subtitle=None
             if subtitle_acc:
                 if self._lesson_number < 0:
-                    #title += " - Start"
                     subtitle = None
                     pass
                 else:
